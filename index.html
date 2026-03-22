@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação: Central de Suporte Inteligente</title>
+    <style>
+        /* Estética Dark Mode / High-Tech */
+        :root {
+            --bg-color: #0b0f19;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-cyan: #00ffff;
+            --accent-blue: #1e3a8a;
+            --card-bg: #111827;
+            --success: #10b981;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .presentation-container {
+            width: 90%; max-width: 1200px; height: 85vh;
+            background-color: var(--card-bg);
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.05);
+            position: relative; overflow: hidden;
+        }
+
+        .progress-bar {
+            position: absolute; top: 0; left: 0; height: 4px;
+            background-color: var(--accent-cyan); width: 0%;
+            transition: width 0.4s ease; box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .slide {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 40px; box-sizing: border-box;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(20px);
+        }
+
+        .slide.active { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        h1 { font-size: 3.2rem; margin-bottom: 20px; text-align: center; background: linear-gradient(90deg, #ffffff, var(--accent-cyan)); background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 2.3rem; color: var(--accent-cyan); margin-bottom: 25px; text-align: center; }
+        p { font-size: 1.3rem; line-height: 1.6; color: var(--text-muted); text-align: center; max-width: 850px; margin-bottom: 20px; }
+        ul { font-size: 1.2rem; color: var(--text-main); line-height: 1.6; max-width: 800px; }
+        li { margin-bottom: 12px; }
+        li span { color: var(--accent-cyan); font-weight: bold; }
+
+        .highlight-box {
+            background-color: rgba(30, 58, 138, 0.3);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 20px; border-radius: 0 8px 8px 0;
+            margin-top: 20px; width: 100%; max-width: 800px;
+        }
+
+        /* Estilos do Mapa Mental */
+        .mindmap-container {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; max-width: 1000px; margin-top: 30px; gap: 15px;
+        }
+        .node {
+            background: rgba(30, 58, 138, 0.2);
+            border: 1px solid var(--accent-cyan);
+            padding: 15px 20px; border-radius: 10px;
+            text-align: center; font-weight: bold; font-size: 0.9rem;
+            min-width: 120px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        .node.ia { background: var(--accent-blue); border-width: 2px; font-size: 1.1rem; }
+        .node.final { border-color: var(--success); color: var(--success); }
+        .arrow { color: var(--accent-cyan); font-size: 1.5rem; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { transform: translateX(0); opacity: 0.5; }
+            50% { transform: translateX(5px); opacity: 1; }
+            100% { transform: translateX(0); opacity: 0.5; }
+        }
+
+        /* Estilos de Tabela de Custos e Roadmap */
+        .grid-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1000px; }
+        .info-card { background: rgba(255,255,255,0.03); border: 1px solid #334155; padding: 20px; border-radius: 12px; text-align: center; }
+        .info-card h4 { color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; font-size: 0.9rem; }
+        .info-card .price { font-size: 1.8rem; font-weight: bold; color: #fff; }
+
+        .roadmap { display: flex; justify-content: space-between; width: 100%; max-width: 1000px; position: relative; margin-top: 40px; }
+        .roadmap::before { content: ''; position: absolute; top: 25px; left: 0; width: 100%; height: 2px; background: #334155; z-index: 1; }
+        .roadmap-step { position: relative; z-index: 2; text-align: center; flex: 1; }
+        .step-circle { width: 50px; height: 50px; background: var(--bg-color); border: 3px solid var(--accent-cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-weight: bold; box-shadow: 0 0 15px rgba(0,255,255,0.3); }
+        .step-label { font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; }
+        .step-days { font-size: 0.8rem; color: var(--text-muted); }
+
+        .controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 10; }
+        button { background: transparent; color: var(--accent-cyan); border: 2px solid var(--accent-cyan); padding: 12px 30px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        button:hover { background: var(--accent-cyan); color: var(--bg-color); box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); }
+        button:disabled { border-color: #334155; color: #334155; cursor: not-allowed; }
+        .slide-counter { position: absolute; bottom: 40px; right: 40px; color: var(--text-muted); font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+        <div class="progress-bar" id="progress"></div>
+
+        <div class="slide active">
+            <h1>Central de Suporte Inteligente</h1>
+            <p style="color: var(--text-main); font-size: 1.5rem;">Organizando os chamados da empresa</p>
+            <p>Automatizando a triagem e o roteamento com Inteligência Artificial.</p>
+        </div>
+
+        <div class="slide">
+            <h2>Desperdício Invisível</h2>
+            <ul>
+                <li><span>Múltiplos Canais:</span> Chamados via WhatsApp, e-mail, chat, e outros</li>
+                <li><span>Falta de Padrão:</span> Informações incompletas e retrabalho.</li>
+                <li><span>Roteamento Manual:</span> Chamados na fila errada, atrasando a solução.</li>
+                <li><span>Sem Visibilidade:</span> Dificuldade em medir o ROI da equipe técnica.</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>Mapa Mental da Solução</h2>
+            <p>O cérebro da operação: Decidindo o melhor caminho para o dado.</p>
+            
+            <div class="mindmap-container">
+                <div class="node">CHAMADOS
+                    <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 5px;">Multicanais</div>
+                </div>
+                <div class="arrow">➞</div>
+                <div class="node">SISTEMA
+                    <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 5px;">Gateway de Recebimento</div>
+                </div>
+                <div class="arrow">➞</div>
+                <div class="node ia">AGENTE IA</div>
+                <div class="arrow">➞</div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="node" style="border-color: var(--success); color: var(--success); font-size: 0.75rem;">RESOLUÇÃO AUTÔNOMA</div>
+                    <div style="text-align: center; color: var(--accent-cyan); font-weight: bold; font-size: 0.7rem;">OU</div>
+                    <div class="node" style="font-size: 0.75rem;">ROTEAMENTO ESPECIALISTA</div>
+                </div>
+                <div class="arrow">➞</div>
+                <div class="node final">SOLUÇÃO</div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 30px;">
+                <p style="text-align: center; margin: 0; font-size: 1.1rem;">
+                    A IA decide: <strong>Resolve agora</strong> ou <strong>Entrega para quem sabe resolver</strong>.
+                </p>
+            </div>
+        </div>
+        <div class="slide">
+            <h2>Como o sistema irá funcionar?</h2>
+            <ul>
+                <li>Todos os chamados serão centralizados no Gateway via APIs e Integrações</li>
+                <li>O sistema irá enviar ao Agente IA todos os chamados, para classificação </li>
+                <li>O agente irá analisar o chamado, caso não seja possível a resolução imediata, será encaminhado para o setor responsável</li>
+                <li>Assim que o chamado for finalizado, com a solução, o sistema será alimentado com as informações pertinentes</li>
+            </ul>
+        </div>        
+        <div class="slide">
+            <h2>Como a IA irá trabalhar?</h2>
+            <ul>
+                <li>Fará uma análise do chamado, e classificará o nível de competência exigido para resolução</li>
+                <li>Caso haja em sua base de conhecimento, uma solução viável, será aplicada imediatamente</li>
+                <li>Caso contrário, o agente irá identificar o setor responsável e o usuário mais capacitado e com menor demanda para a solução (Demanda essa que será calculada baseado nos chamados já atribuidos pelo agente)</li>
+                <li>O usuário receberá a sua demanda, e será calculado um prazo para entrega.</li>
+            </ul>
+        </div>
+        <div class="slide">
+            <h2>Governança & Evolução</h2>
+            <p>Garantindo que a inovação caminhe junto com a segurança corporativa.</p>
+            
+            <div class="grid-info">
+                <div class="info-card">
+                    <span class="icon-label"> Segurança</span>
+                    <h4>Proteção de Dados</h4>
+                    <ul style="font-size: 0.75rem; text-align: left; margin-top: 10px;">
+                        <li>Criptografia de ponta a ponta (SSL).</li>
+                        <li>Conformidade com a LGPD.</li>
+                        <li>Anonimização de dados sensíveis.</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <span class="icon-label">Governança</span>
+                    <h4>Controle de Acesso</h4>
+                    <ul style="font-size: 0.75rem; text-align: left; margin-top: 10px;">
+                        <li>Logs de auditoria completos.</li>
+                        <li>Níveis de permissão (Admin/Técnico).</li>
+                        <li>Monitoramento de custos em tempo real.</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <span class="icon-label">Evolução</span>
+                    <h4>Escalabilidade IA</h4>
+                    <ul style="font-size: 0.75rem; text-align: left; margin-top: 10px;">
+                        <li>Melhoria contínua via Feedback Loop.</li>
+                        <li>Integração com novas ferramentas.</li>
+                        <li>Preparado para crescimento de volume.</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 30px; font-size: 1rem; color: var(--text-main);">
+                A solução é <strong>agnóstica</strong> e <strong>auditável</strong>, garantindo total controle para o TI.
+            </p>
+        </div>
+        <div class="slide">
+            <h2>Cronograma de Implementação</h2>
+            <p>Um processo estruturado para garantir a transição em 90-120 dias.</p>
+            
+            <div class="roadmap">
+                <div class="roadmap-step">
+                    <div class="step-circle">01</div>
+                    <div class="step-label">Diagnóstico</div>
+                    <div class="step-days">Dia 0 - 20</div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="step-circle">02</div>
+                    <div class="step-label">Desenvolvimento</div>
+                    <div class="step-days">Dia 21 - 70</div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="step-circle">03</div>
+                    <div class="step-label">Homologação</div>
+                    <div class="step-days">Dia 71 - 90</div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="step-circle" style="border-color: var(--success); color: var(--success);">04</div>
+                    <div class="step-label">Go-Live</div>
+                    <div class="step-days">90 - 120 Dias</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Próximos Passos</h2>
+            <ul>
+                <li>Mapeamento dos 3 principais gargalos atuais.</li>
+                <li>Levantamento de todos os canais de recebimento de chamados</li>
+                <li>Definição de setores e usuários aos quais serão encaminhados os chamados</li>
+                <li>Estudo e alinhamento de base de conhecimento que será injetado na IA</li>
+            </ul>
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" onclick="changeSlide(-1)" disabled>Anterior</button>
+            <button id="nextBtn" onclick="changeSlide(1)">Próximo</button>
+        </div>
+        
+        <div class="slide-counter" id="counter">1 / 8</div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const counter = document.getElementById('counter');
+        const progressBar = document.getElementById('progress');
+
+        function updateUI() {
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === currentSlide);
+            });
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.innerText = currentSlide === slides.length - 1 ? "Finalizar" : "Próximo";
+            counter.innerText = `${currentSlide + 1} / ${slides.length}`;
+            progressBar.style.width = `${((currentSlide) / (slides.length - 1)) * 100}%`;
+        }
+
+        function changeSlide(direction) {
+            // Verifica se está no último slide e clicou em Finalizar
+            if (currentSlide === slides.length - 1 && direction === 1) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= slides.length) currentSlide = slides.length - 1;
+            
+            updateUI();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'ArrowLeft' && currentSlide > 0) changeSlide(-1);
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
