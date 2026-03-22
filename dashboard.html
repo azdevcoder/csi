@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSI - Central de Comando</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        :root {
+            --bg-deep: #06090f;
+            --bg-card: #0d1117;
+            --accent-cyan: #00ffff;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+            --success: #238636;
+            --warning: #f2cc60;
+            --danger: #da3633;
+            --sidebar-w: 240px;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; display: flex; height: 100vh; overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex; flex-direction: column; padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            padding: 15px 25px; cursor: pointer; color: var(--text-dim);
+            transition: 0.3s; border-left: 3px solid transparent;
+            display: flex; align-items: center; gap: 12px;
+            position: relative;
+        }
+
+        .nav-item i { font-size: 1.1rem; }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--accent-cyan); background: rgba(0, 255, 255, 0.05);
+            border-left-color: var(--accent-cyan);
+        }
+
+        .nav-badge {
+            background: var(--danger); color: white; font-size: 0.65rem;
+            padding: 2px 6px; border-radius: 10px; position: absolute; right: 15px;
+            font-weight: bold;
+        }
+
+        /* Área Principal */
+        .main-content { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
+        .view { display: none; animation: fadeIn 0.4s ease; }
+        .view.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Filtros Gerais */
+        .filter-bar {
+            display: flex; align-items: center; gap: 15px;
+            background: var(--bg-card); padding: 12px 20px;
+            border: 1px solid #30363d; border-radius: 8px; margin-bottom: 25px;
+        }
+        
+        /* Filtros de Chamados (Pills) */
+        .ticket-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-pill {
+            background: #161b22; border: 1px solid #30363d; color: var(--text-dim);
+            padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .filter-pill:hover, .filter-pill.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0, 255, 255, 0.05); }
+
+        .filter-select, .filter-date {
+            background: #161b22; color: var(--text-main);
+            border: 1px solid #30363d; padding: 8px 12px; border-radius: 4px; outline: none;
+        }
+        .btn-filter {
+            background: rgba(0, 255, 255, 0.1); color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan); padding: 8px 15px;
+            border-radius: 4px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-filter:hover { background: var(--accent-cyan); color: var(--bg-deep); }
+
+        /* Cards e Grid */
+        .grid-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .card { background: var(--bg-card); border: 1px solid #30363d; border-radius: 12px; padding: 20px; transition: 0.3s; position: relative; }
+        .card.hidden { display: none; }
+        .card h3 { margin: 0; font-size: 0.9rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .card-icon { color: var(--accent-cyan); font-size: 1.4rem; }
+
+        /* Estilos específicos para Meus Chamados */
+        .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+        .badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
+        .badge-low { background: rgba(35, 134, 54, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .badge-high { background: rgba(218, 54, 51, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .badge-warn { background: rgba(242, 204, 96, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+        
+        .ai-reason { background: rgba(0, 255, 255, 0.03); border: 1px dashed var(--accent-cyan); padding: 10px; border-radius: 6px; font-size: 0.8rem; margin: 15px 0; color: var(--accent-cyan); }
+        .btn-action { width: 100%; background: transparent; border: 1px solid #30363d; color: var(--text-main); padding: 10px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-action:hover { background: var(--accent-cyan); color: var(--bg-deep); border-color: var(--accent-cyan); }
+
+        /* Tabelas */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 12px; border-bottom: 1px solid #30363d; color: var(--accent-cyan); font-size: 0.85rem; }
+        td { padding: 12px; border-bottom: 1px solid #21262d; font-size: 0.9rem; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: var(--bg-card); border: 1px solid #30363d; width: 90%; max-width: 500px; padding: 30px; border-radius: 12px; }
+        textarea { width: 100%; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #fff; padding: 12px; box-sizing: border-box; resize: none; min-height: 100px; margin: 15px 0; outline: none; }
+
+        .btn-pdf { 
+            background: var(--accent-cyan); color: var(--bg-deep); border: none; 
+            padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; 
+            margin-top: 20px; display: flex; align-items: center; gap: 10px;
+        }
+
+        .trend { font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+        .up { color: var(--success); }
+        
+        /* Estilo para a data nos cards */
+        .ticket-date { font-size: 0.7rem; color: var(--text-dim); display: block; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div style="padding: 0 25px 30px; font-weight: bold; color: var(--accent-cyan); font-size: 1.4rem; display: flex; align-items: center; gap: 10px;">
+            <i class="bi bi-cpu-fill"></i> CSI
+        </div>
+        <div class="nav-item active" onclick="showView('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard Geral</div>
+        <div class="nav-item" onclick="showView('my-tickets')">
+            <i class="bi bi-person-workspace"></i> Meus Chamados
+            <span class="nav-badge" id="side-badge">5</span>
+        </div>
+        <div class="nav-item" onclick="showView('logs')"><i class="bi bi-terminal"></i> Logs de IA</div>
+        <div class="nav-item" onclick="showView('reports')"><i class="bi bi-file-earmark-bar-graph"></i> Gerar Relatórios</div>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="dashboard" class="view active">
+            <h2 style="display: flex; align-items: center; gap: 12px;"><i class="bi bi-activity"></i> Performance em Tempo Real</h2>
+
+            <div class="filter-bar">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-calendar3" style="color: var(--accent-cyan);"></i>
+                    <select class="filter-select" id="period-select" onchange="toggleCustomDate()">
+                        <option value="today">Hoje (Tempo Real)</option>
+                        <option value="7days">Últimos 7 dias</option>
+                        <option value="30days">Últimos 30 dias</option>
+                        <option value="custom">Personalizado...</option>
+                    </select>
+                </div>
+                <div id="custom-date-group" style="display: none; gap: 8px; align-items: center;">
+                    <input type="date" class="filter-date">
+                    <i class="bi bi-arrow-right-short"></i>
+                    <input type="date" class="filter-date">
+                </div>
+                <button class="btn-filter" onclick="applyFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Atualizar Dashboard
+                </button>
+            </div>
+            
+            <div class="grid-kpi">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3>SLA Global</h3>
+                        <i class="bi bi-shield-check card-icon"></i>
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 15px;">
+                        <div style="font-size: 2.2rem; color: var(--success); font-weight: bold;">98.4%</div>
+                        <div class="trend up"><i class="bi bi-graph-up-arrow"></i> 1.2%</div>
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">Meta: 95.0%</p>
+                </div>
+                
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3>Auto-Resolução IA</h3>
+                        <i class="bi bi-robot card-icon"></i>
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 15px;">
+                        <div style="font-size: 2.2rem; color: var(--accent-cyan); font-weight: bold;">68%</div>
+                        <div class="trend up"><i class="bi bi-graph-up-arrow"></i> 5.4%</div>
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">843 tickets automatizados</p>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3>ROI Gerado</h3>
+                        <i class="bi bi-cash-stack card-icon"></i>
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 15px;">
+                        <div style="font-size: 2.2rem; color: #fff; font-weight: bold;">R$ 15.2k</div>
+                        <div class="trend up" style="color: var(--accent-cyan);"><i class="bi bi-pie-chart"></i> +12%</div>
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">Custo operacional evitado</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 style="display: flex; align-items: center; gap: 10px;"><i class="bi bi-bar-chart-fill" style="color: var(--accent-cyan);"></i> Volume por Nível</h3>
+                    <span style="font-size: 0.65rem; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 3px 10px; border-radius: 20px; letter-spacing: 1px;">LIVE SYNC</span>
+                </div>
+                <div style="display: flex; gap: 40px; align-items: flex-end; height: 180px; padding: 0 20px 30px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; max-width: 70px;">
+                        <span style="font-size: 0.8rem; color: var(--accent-cyan);">45</span>
+                        <div style="background: linear-gradient(to top, var(--accent-cyan), transparent); width: 100%; height: 120px; border-radius: 4px;"></div>
+                        <span style="font-size: 0.7rem; color: var(--text-dim); font-weight: bold;">N1-INFRA</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; max-width: 70px;">
+                        <span style="font-size: 0.8rem; color: var(--accent-cyan);">28</span>
+                        <div style="background: var(--accent-cyan); width: 100%; height: 80px; border-radius: 4px; opacity: 0.6;"></div>
+                        <span style="font-size: 0.7rem; color: var(--text-dim); font-weight: bold;">N2-SIST.</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; max-width: 70px;">
+                        <span style="font-size: 0.8rem; color: var(--accent-cyan);">12</span>
+                        <div style="background: var(--accent-cyan); width: 100%; height: 40px; border-radius: 4px; opacity: 0.3;"></div>
+                        <span style="font-size: 0.7rem; color: var(--text-dim); font-weight: bold;">N3-DEV</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="my-tickets" class="view">
+            <h2 style="display: flex; align-items: center; gap: 12px;"><i class="bi bi-person-workspace"></i> Fila de Atendimento Especializado</h2>
+            
+            <div class="ticket-filters">
+                <div class="filter-pill active" onclick="filterTickets('all')">Todos</div>
+                <div class="filter-pill" onclick="filterTickets('Crítico')">Crítico</div>
+                <div class="filter-pill" onclick="filterTickets('Urgente')">Urgente</div>
+                <div class="filter-pill" onclick="filterTickets('Baixo')">Baixo</div>
+            </div>
+
+            <div class="ticket-grid" id="ticketContainer">
+                <div class="card" data-priority="Crítico">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="badge badge-high">Crítico</span>
+                        <span style="color: var(--text-dim); font-size: 0.75rem;">ID: #9842</span>
+                    </div>
+                    <h4 style="margin: 15px 0 5px;">Depuração de Script Playwright</h4>
+                    <span class="ticket-date"><i class="bi bi-clock"></i> 22/03/2026 18:45</span>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">Usuário: Marketing Setor B</p>
+                    <div class="ai-reason">
+                        <i class="bi bi-robot"></i> <strong>Decisão IA:</strong> Erro 403 persistente em seletor dinâmico. Possível bloqueio Cloudflare.
+                    </div>
+                    <button class="btn-action" onclick="openResolutionModal(9842, this)">Resolver Agora</button>
+                </div>
+
+                <div class="card" data-priority="Urgente">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="badge badge-warn">Urgente</span>
+                        <span style="color: var(--text-dim); font-size: 0.75rem;">ID: #9845</span>
+                    </div>
+                    <h4 style="margin: 15px 0 5px;">Instância Evolution API Off</h4>
+                    <span class="ticket-date"><i class="bi bi-clock"></i> 22/03/2026 16:30</span>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">Usuário: Sistema Agendamento</p>
+                    <div class="ai-reason">
+                        <i class="bi bi-robot"></i> <strong>Decisão IA:</strong> Reinicialização automática falhou. Verificado erro de pareamento.
+                    </div>
+                    <button class="btn-action" onclick="openResolutionModal(9845, this)">Resolver Agora</button>
+                </div>
+
+                <div class="card" data-priority="Crítico">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="badge badge-high">Crítico</span>
+                        <span style="color: var(--text-dim); font-size: 0.75rem;">ID: #9848</span>
+                    </div>
+                    <h4 style="margin: 15px 0 5px;">Sanitização de Logs (LGPD)</h4>
+                    <span class="ticket-date"><i class="bi bi-clock"></i> 21/03/2026 14:10</span>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">Usuário: Auditoria Interna</p>
+                    <div class="ai-reason">
+                        <i class="bi bi-robot"></i> <strong>Decisão IA:</strong> Detectado padrão de CPF em logs de debug do Agente Autônomo.
+                    </div>
+                    <button class="btn-action" onclick="openResolutionModal(9848, this)">Resolver Agora</button>
+                </div>
+
+                <div class="card" data-priority="Baixo">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="badge badge-low">Baixo</span>
+                        <span style="color: var(--text-dim); font-size: 0.75rem;">ID: #9850</span>
+                    </div>
+                    <h4 style="margin: 15px 0 5px;">Ajuste de Dark Mode no ERP</h4>
+                    <span class="ticket-date"><i class="bi bi-clock"></i> 20/03/2026 09:55</span>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">Usuário: Diretoria</p>
+                    <div class="ai-reason">
+                        <i class="bi bi-robot"></i> <strong>Decisão IA:</strong> Solicitação de alteração visual de paleta (Neon Cyan).
+                    </div>
+                    <button class="btn-action" onclick="openResolutionModal(9850, this)">Aplicar CSS</button>
+                </div>
+
+                <div class="card" data-priority="Urgente">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="badge badge-warn">Urgente</span>
+                        <span style="color: var(--text-dim); font-size: 0.75rem;">ID: #9852</span>
+                    </div>
+                    <h4 style="margin: 15px 0 5px;">Loop de Reflexão no Agente</h4>
+                    <span class="ticket-date"><i class="bi bi-clock"></i> 19/03/2026 23:15</span>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">Usuário: Automação Leads</p>
+                    <div class="ai-reason">
+                        <i class="bi bi-robot"></i> <strong>Decisão IA:</strong> Agente em loop infinito. Consumo de tokens elevado.
+                    </div>
+                    <button class="btn-action" onclick="openResolutionModal(9852, this)">Ajustar Prompt</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="logs" class="view">
+            <h2 style="display: flex; align-items: center; gap: 12px;"><i class="bi bi-terminal-fill"></i> Inteligência em Ação</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Data/Hora</th><th>Usuário</th><th>Problema Detectado</th><th>Decisão da IA</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>22/03/26 18:42</td><td>André Z.</td><td>"Falha no login ERP"</td><td>Interpretação Automática</td><td style="color: var(--success);"><i class="bi bi-check-circle-fill"></i> Resolvido</td></tr>
+                        <tr><td>22/03/26 17:15</td><td>Setor Vendas</td><td>"Queda de Conexão"</td><td>Roteamento Crítico</td><td style="color: #f2cc60;"><i class="bi bi-exclamation-triangle-fill"></i> Encaminhado</td></tr>
+                        <tr><td>21/03/26 11:30</td><td>RH Corporativo</td><td>"Acesso ao Portal"</td><td>Redirecionamento N1</td><td style="color: var(--accent-cyan);"><i class="bi bi-clock-history"></i> Em triagem</td></tr>
+                        <tr><td>20/03/26 22:10</td><td>Sistema</td><td>"Erro 500 API"</td><td>Auto-Rollback</td><td style="color: var(--success);"><i class="bi bi-check-circle-fill"></i> Resolvido</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="reports" class="view">
+            <h2 style="display: flex; align-items: center; gap: 12px;"><i class="bi bi-file-earmark-pdf-fill"></i> Exportação C-Level</h2>
+            <div id="report-area">
+                <div style="background: #0d1117; padding: 40px; border: 1px solid #30363d; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h1 style="color: var(--accent-cyan); margin: 0; font-size: 1.8rem;">Relatório de Eficiência CSI</h1>
+                        <i class="bi bi-cpu-fill" style="font-size: 2rem; color: var(--accent-cyan);"></i>
+                    </div>
+                    <p style="color: var(--text-dim); margin-top: 10px;">Consolidado Gerencial: 22 de Março, 2026</p>
+                    <hr style="border: 0; border-top: 1px solid #30363d; margin: 30px 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px;">
+                        <div>
+                            <p style="margin-bottom: 20px;">Tickets Processados (Mar/26): <strong style="color:white; float:right">1.240</strong></p>
+                            <p style="margin-bottom: 20px;">Resolução via Agente IA: <strong style="color:white; float:right">843</strong></p>
+                        </div>
+                        <div>
+                            <p style="margin-bottom: 20px;">SLA Médio Mensal: <strong style="color:var(--success); float:right">97.8%</strong></p>
+                            <p style="margin-bottom: 20px;">Economia Estimada: <strong style="color:var(--accent-cyan); float:right">R$ 15.200,00</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-pdf" onclick="generatePDF()">
+                <i class="bi bi-cloud-arrow-down-fill"></i> Baixar Relatório Mensal (PDF)
+            </button>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2 style="color: var(--accent-cyan); margin: 0;">Finalizar Chamado <span id="ticketIdDisplay"></span></h2>
+            <textarea id="resolutionText" placeholder="Como este problema foi resolvido?"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-action" style="background: var(--success); color: white; border: none;" onclick="submitResolution()">Confirmar</button>
+                <button class="btn-action" onclick="closeModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTicketElement = null; // Armazena o card que está sendo resolvido
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                if(item.getAttribute('onclick').includes(viewId)) item.classList.add('active');
+            });
+        }
+
+        // Lógica de Filtro de Chamados
+        function filterTickets(category) {
+            // Atualiza botões
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText === category || (category === 'all' && btn.innerText === 'Todos')) btn.classList.add('active');
+            });
+
+            // Filtra os cards
+            const cards = document.querySelectorAll('#ticketContainer .card');
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-priority') === category) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleCustomDate() {
+            const period = document.getElementById('period-select').value;
+            document.getElementById('custom-date-group').style.display = (period === 'custom') ? 'flex' : 'none';
+        }
+
+        function applyFilters() {
+            const btn = document.querySelector('.btn-filter');
+            btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Sincronizando...`;
+            setTimeout(() => {
+                btn.innerHTML = `<i class="bi bi-arrow-clockwise"></i> Atualizar Dashboard`;
+            }, 800);
+        }
+
+        function generatePDF() {
+            const element = document.getElementById('report-area');
+            const options = {
+                margin: 0.5, filename: 'Relatorio_CSI_AzDev.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, backgroundColor: '#0d1117' },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(options).from(element).save();
+        }
+
+        function openResolutionModal(id, btnElement) {
+            currentTicketElement = btnElement.closest('.card'); // Salva o card atual
+            document.getElementById('ticketIdDisplay').innerText = '#' + id;
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        function submitResolution() {
+            if(currentTicketElement) {
+                currentTicketElement.remove(); // Remove o card resolvido
+                updateBadgeCount(); // Atualiza o contador na sidebar
+            }
+            alert("Base de conhecimento atualizada com sucesso!");
+            closeModal();
+        }
+
+        function updateBadgeCount() {
+            const count = document.querySelectorAll('#ticketContainer .card').length;
+            document.getElementById('side-badge').innerText = count;
+            if(count === 0) document.getElementById('side-badge').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
