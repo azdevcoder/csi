@@ -345,6 +345,15 @@
                     </div>
                     <p style="color: var(--text-dim); margin-top: 10px;">Consolidado Gerencial: 23 de Março, 2026</p>
                     <hr style="border: 0; border-top: 1px solid #30363d; margin: 30px 0;">
+                    <div id="custom-date-group" style="display: none; gap: 8px; align-items: center;">
+                    <input type="date" class="filter-date">
+                    <i class="bi bi-arrow-right-short"></i>
+                    <input type="date" class="filter-date">
+                </div>
+                <button class="btn-filter" onclick="applyFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Atualizar Dashboard
+                </button>
+            </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px;">
                         <div>
                             <p style="margin-bottom: 20px;">Tickets Processados (Mar/26): <strong style="color:white; float:right">1.240</strong></p>
